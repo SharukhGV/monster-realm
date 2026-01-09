@@ -75,7 +75,7 @@ const parseSymbols = (str) => ({
   isGlobal: str.includes('☀'),
 });
 
-const MonsterCard = ({ monster, isPlayer, isActive, onClick, showPoison, showProtected, isDead, totalReflectUses }) => {
+const MonsterCard = ({ monster, isPlayer, isActive, onClick, showPoison, showProtected, isDead }) => {
   const hpPercentage = (monster.currentHp / monster.health) * 100;
   let hpBarClass = 'bg-green-500';
   if (hpPercentage <= 30) hpBarClass = 'bg-red-500';
@@ -141,16 +141,17 @@ const MonsterCard = ({ monster, isPlayer, isActive, onClick, showPoison, showPro
           <div className="text-[8px] text-gray-400">Ability 3</div>
         </div>
       </div>
+
+      {/* reflect indicator */}
       
-      {/* Global Reflect Indicator */}
-      {monster.ability1Symbols.includes('⌮') || 
-       monster.ability2Symbols.includes('⌮') || 
-       monster.ability3Symbols.includes('⌮') ? (
-        <div className="absolute top-2 right-2 bg-gradient-to-r from-orange-600 to-amber-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
-          <span className="symbol symbol-reflect">⌮</span>
-          <span>{3 - totalReflectUses}/3 uses</span>
-        </div>
-      ) : null}
+{monster.ability1Symbols.includes('⌮') || 
+ monster.ability2Symbols.includes('⌮') || 
+ monster.ability3Symbols.includes('⌮') ? (
+  <div className="absolute top-2 right-2 bg-gradient-to-r from-orange-600 to-amber-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+    <span className="symbol symbol-reflect">⌮</span>
+    <span>{monster.reflectUses - monster.reflectUsesUsed}/3 uses</span>
+  </div>
+) : null}
     </div>
   );
 };
@@ -346,7 +347,7 @@ const MonsterRealmGame = () => {
   const [monstersActed, setMonstersActed] = useState([]);
   const [playerMovesMade, setPlayerMovesMade] = useState(0);
   const [cpuMovesMade, setCpuMovesMade] = useState(0);
-  const [totalReflectUses, setTotalReflectUses] = useState(0);
+//   const [totalReflectUses, setTotalReflectUses] = useState(0);
   
 // Player Turn Auto-End Effect
 useEffect(() => {
@@ -396,6 +397,7 @@ useEffect(() => {
 
 
   // CPU Turn Automation Effect
+// CPU Turn Automation Effect
 useEffect(() => {
   if (currentPlayer !== 'cpu') return;
 
@@ -444,7 +446,8 @@ useEffect(() => {
 
     let targetData = null;
 
-    if (parsedEffects.dmg > 0 && !parsedEffects.isGlobal) {
+    // FIX: Include poison-only abilities in targeting logic
+    if ((parsedEffects.dmg > 0 || parsedEffects.poison || parsedEffects.preventHeal) && !parsedEffects.isGlobal) {
       const playerAlive = playerTeam.filter(m => m.currentHp > 0);
       if (playerAlive.length > 0) {
         const target = playerAlive[Math.floor(Math.random() * playerAlive.length)];
@@ -458,7 +461,6 @@ useEffect(() => {
   return () => clearTimeout(timer);
 }, [currentPlayer, cpuMovesMade, cpuTeam, playerTeam, monstersActed, turn]);
 
-
   // Fix the logs structure - ensure logs are strings, not objects
   const addLog = (message) => {
     const timestamp = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
@@ -466,16 +468,18 @@ useEffect(() => {
     setLogs(prev => [formattedMessage, ...prev].slice(0, 15));
   };
 
-  const initializeMonster = (monster) => ({
-    ...monster,
-    currentHp: monster.health,
-    maxHp: monster.health,
-    isPoisoned: false,
-    isProtected: false,
-    canHeal: true,
-    preventHealing: false,
-    poisonDamage: 0
-  });
+const initializeMonster = (monster) => ({
+  ...monster,
+  currentHp: monster.health,
+  maxHp: monster.health,
+  isPoisoned: false,
+  isProtected: false,
+  canHeal: true,
+  preventHealing: false,
+  poisonDamage: 0,
+  reflectUses: 3, // Each monster gets 3 reflect uses
+  reflectUsesUsed: 0 // Track how many they've used
+});
 
   const toggleSelect = (monster) => {
     if (playerTeam.find(m => m.creature === monster.creature)) {
@@ -501,32 +505,36 @@ useEffect(() => {
     addLog("Battle started! Turn 1: Each player may only use 2 monsters.");
   };
 
-  const handleAbilitySelect = (monster, abilityKey) => {
-    if (currentPlayer !== 'player' || monster.currentHp <= 0) return;
-    
-    if (monstersActed.includes(monster.creature)) {
-      addLog(`${monster.creature} has already acted this turn!`);
-      return;
-    }
-    
-    const maxMoves = turn === 1 ? 2 : 5;
-    if (playerMovesMade >= maxMoves) {
-      addLog(`You've used all ${maxMoves} moves for this turn!`);
-      return;
-    }
-    
-    const ability = monster[abilityKey];
-    const effects = parseSymbols(ability);
-    
-    if (effects.dmg > 0 && !effects.isGlobal) {
-      setSelectedAbility({ monster, abilityKey, effects, ability });
-      setSelectedMonster(monster);
-      setTargetMode(true);
-      addLog(`Select target for ${monster.creature}'s ability: ${ability}`);
-    } else {
-      executeAbility(monster, abilityKey, effects, ability);
-    }
-  };
+ const handleAbilitySelect = (monster, abilityKey) => {
+  if (currentPlayer !== 'player' || monster.currentHp <= 0) return;
+  
+  if (monstersActed.includes(monster.creature)) {
+    addLog(`${monster.creature} has already acted this turn!`);
+    return;
+  }
+  
+  const maxMoves = turn === 1 ? 2 : 5;
+  if (playerMovesMade >= maxMoves) {
+    addLog(`You've used all ${maxMoves} moves for this turn!`);
+    return;
+  }
+  
+  const ability = monster[abilityKey];
+  const effects = parseSymbols(ability);
+  
+  // Enter target mode if ability requires targeting (damage OR poison OR preventHeal)
+  const requiresTarget = (effects.dmg > 0 || effects.poison || effects.preventHeal) && !effects.isGlobal;
+  
+  if (requiresTarget) {
+    setSelectedAbility({ monster, abilityKey, effects, ability });
+    setSelectedMonster(monster);
+    setTargetMode(true);
+    addLog(`Select target for ${monster.creature}'s ability: ${ability}`);
+  } else {
+    // Execute immediately for global or self-targeting abilities
+    executeAbility(monster, abilityKey, effects, ability);
+  }
+};
 
   const handleTargetSelect = (targetMonster, isPlayerTarget) => {
     if (!selectedAbility || !targetMode) return;
@@ -546,7 +554,7 @@ useEffect(() => {
 const executeAbility = (actor, abilityKey, effects, ability, targetData = null) => {
   const abilityText = actor[abilityKey];
   
-  // Clone the current state to avoid mutations
+  // Clone the current state
   const updatedPlayerTeam = [...playerTeam];
   const updatedCpuTeam = [...cpuTeam];
   
@@ -554,17 +562,16 @@ const executeAbility = (actor, abilityKey, effects, ability, targetData = null) 
   let actorTeam = isPlayerAction ? updatedPlayerTeam : updatedCpuTeam;
   let targetTeam = isPlayerAction ? updatedCpuTeam : updatedPlayerTeam;
   
-  // Find the actor in their team
+  // Find actor
   const actorIndex = actorTeam.findIndex(m => m.creature === actor.creature);
   if (actorIndex === -1) return;
   
   const updatedActor = { ...actorTeam[actorIndex] };
   const newLogs = [];
   
-  // Add initial log
   newLogs.push(`${updatedActor.creature} uses ${abilityText}`);
   
-  // Mark monster as acted
+  // Mark as acted
   setMonstersActed(prev => [...prev, updatedActor.creature]);
   
   // Update move counters
@@ -581,6 +588,56 @@ const executeAbility = (actor, abilityKey, effects, ability, targetData = null) 
     newLogs.push(`${updatedActor.creature} wounded itself for ${woundDamage} damage`);
   }
   
+  // Bird's Nest Fungus special handling
+// Special handling for Bird's Nest Fungus combo - PUT THIS AFTER SELF-WOUND LOGIC BUT BEFORE TARGET FINDING
+if (effects.selfWound && effects.reflect && effects.isGlobal && effects.dmg === 0) {
+  // This is the "☀⚠⌮" combo (no damage number, just symbols)
+  const selfWoundDamage = 2; // 1.5 rounded up
+  
+  // Check if THIS monster has reflect uses remaining
+  if (updatedActor.reflectUsesUsed < updatedActor.reflectUses) {
+    // The self-wound damage gets REFLECTED to ALL opponents instead of hitting self
+    newLogs.push(`${updatedActor.creature} attempts to wound itself for ${selfWoundDamage} damage, but reflects it to all opponents!`);
+    
+    // Apply the reflected damage to ALL opponent creatures
+    targetTeam.forEach((target, index) => {
+      if (target.currentHp > 0) {
+        const updatedTarget = { ...targetTeam[index] };
+        updatedTarget.currentHp = Math.max(0, updatedTarget.currentHp - selfWoundDamage);
+        targetTeam[index] = updatedTarget;
+        newLogs.push(`${updatedActor.creature} reflects ${selfWoundDamage} damage to ${updatedTarget.creature}`);
+      }
+    });
+    
+    // Monster takes NO damage because it was all reflected
+    
+    // Consume one of THIS monster's reflect uses
+    updatedActor.reflectUsesUsed += 1;
+    newLogs.push(`${updatedActor.creature} has ${updatedActor.reflectUses - updatedActor.reflectUsesUsed} reflect uses remaining`);
+  } else {
+    // If THIS monster's reflect uses are exhausted, then the self-wound hits the monster itself
+    updatedActor.currentHp = Math.max(0, updatedActor.currentHp - selfWoundDamage);
+    newLogs.push(`${updatedActor.creature} wounds itself for ${selfWoundDamage} damage (no reflect uses left)`);
+  }
+  
+  // Skip the regular targeting logic for this combo
+  actorTeam[actorIndex] = updatedActor;
+  
+  // Update state and return early
+  if (isPlayerAction) {
+    setPlayerTeam(actorTeam);
+    setCpuTeam(targetTeam);
+  } else {
+    setCpuTeam(actorTeam);
+    setPlayerTeam(targetTeam);
+  }
+  
+  newLogs.forEach(log => addLog(log));
+  
+  // Check turn end logic...
+  return;
+}
+  
   // Find targets
   let targets = [];
   if (effects.isGlobal) {
@@ -592,8 +649,7 @@ const executeAbility = (actor, abilityKey, effects, ability, targetData = null) 
     if (targetIndex !== -1) {
       targets = [targetTeam[targetIndex]];
     }
-  } else if (effects.dmg > 0) {
-    // Pick a random alive target
+  } else if (effects.dmg > 0 || effects.poison || effects.preventHeal) {
     const aliveTargets = targetTeam.filter(m => m.currentHp > 0);
     if (aliveTargets.length > 0) {
       const randomTarget = aliveTargets[Math.floor(Math.random() * aliveTargets.length)];
@@ -608,7 +664,6 @@ const executeAbility = (actor, abilityKey, effects, ability, targetData = null) 
   targets.forEach((target) => {
     if (!target || target.currentHp <= 0) return;
     
-    // Find the actual target object in the team array
     const targetIndex = targetTeam.findIndex(m => m.creature === target.creature);
     if (targetIndex === -1) return;
     
@@ -616,14 +671,17 @@ const executeAbility = (actor, abilityKey, effects, ability, targetData = null) 
     
     // Apply damage
     if (effects.dmg > 0) {
-      if (totalReflectUses < 3 && 
-          (updatedTarget.ability1Symbols.includes('⌮') || 
-           updatedTarget.ability2Symbols.includes('⌮') || 
-           updatedTarget.ability3Symbols.includes('⌮'))) {
+      const targetHasReflect = (
+        updatedTarget.ability1Symbols.includes('⌮') || 
+        updatedTarget.ability2Symbols.includes('⌮') || 
+        updatedTarget.ability3Symbols.includes('⌮')
+      ) && updatedTarget.reflectUsesUsed < updatedTarget.reflectUses;
+      
+      if (targetHasReflect) {
         const reflectedDmg = Math.min(effects.dmg, 3);
         updatedActor.currentHp = Math.max(0, updatedActor.currentHp - reflectedDmg);
-        setTotalReflectUses(prev => prev + 1);
-        newLogs.push(`${updatedTarget.creature} reflected ${reflectedDmg} damage back to ${updatedActor.creature}! (${3 - (totalReflectUses + 1)} reflect uses remaining)`);
+        updatedTarget.reflectUsesUsed += 1;
+        newLogs.push(`${updatedTarget.creature} reflected ${reflectedDmg} damage back to ${updatedActor.creature}! (${updatedTarget.reflectUses - updatedTarget.reflectUsesUsed} reflect uses remaining)`);
       } else if (updatedTarget.isProtected) {
         newLogs.push(`${updatedTarget.creature}'s protection blocked the attack!`);
         updatedTarget.isProtected = false;
@@ -645,14 +703,13 @@ const executeAbility = (actor, abilityKey, effects, ability, targetData = null) 
       newLogs.push(`${updatedTarget.creature} cannot be healed this turn`);
     }
     
-    // Update target in team
     targetTeam[targetIndex] = updatedTarget;
   });
   
   // Update actor
   actorTeam[actorIndex] = updatedActor;
   
-  // Apply healing effects to actor's team
+  // Apply healing effects
   if (effects.healHalf && updatedActor.canHeal) {
     const healAmount = Math.ceil(updatedActor.currentHp / 2);
     updatedActor.currentHp = Math.min(updatedActor.maxHp, updatedActor.currentHp + healAmount);
@@ -679,7 +736,7 @@ const executeAbility = (actor, abilityKey, effects, ability, targetData = null) 
   if (effects.protect && !effects.isGlobal) {
     updatedActor.isProtected = true;
     actorTeam[actorIndex] = updatedActor;
-    newLogs.push(`${updatedActor.creature} is now protected`);
+    newLogs.push(`${updatedActor.creature} is now protected (blocks next attack)`);
   } else if (effects.protect && effects.isGlobal) {
     actorTeam.forEach((teammate, index) => {
       if (teammate.currentHp > 0) {
@@ -688,10 +745,10 @@ const executeAbility = (actor, abilityKey, effects, ability, targetData = null) 
         actorTeam[index] = protectedTeammate;
       }
     });
-    newLogs.push(`${updatedActor.creature} protected the entire team`);
+    newLogs.push(`${updatedActor.creature} protected the entire team (each blocks next attack)`);
   }
   
-  // Update state with all changes at once
+  // Update state
   if (isPlayerAction) {
     setPlayerTeam(actorTeam);
     setCpuTeam(targetTeam);
@@ -700,30 +757,18 @@ const executeAbility = (actor, abilityKey, effects, ability, targetData = null) 
     setPlayerTeam(targetTeam);
   }
   
-  // Add all logs at once
   newLogs.forEach(log => addLog(log));
   
-  // Check if turn should end
- const maxMoves = turn === 1 ? 2 : 5;
-
-  if (isPlayerAction) {
-    // Player just acted
-    const newPlayerMoves = playerMovesMade + 1;
-
-    if (newPlayerMoves >= maxMoves) {
-      // Player finished all moves → switch to CPU
-      setTimeout(() => {
-        addLog("Player's turn complete. CPU's turn begins.");
-        setCurrentPlayer('cpu');
-        setCpuMovesMade(0);
-        setMonstersActed([]);
-        // DO NOT call cpuTurn here — let useEffect handle it
-      }, 1000);
-    }
-    // If player still has moves, do nothing — player continues manually
-  } else {
-    // CPU just acted — we don't need to do anything special here
-    // The useEffect will decide whether to continue or end turn
+  // Check turn end
+  const maxMoves = turn === 1 ? 2 : 5;
+  
+  if (isPlayerAction && (playerMovesMade + 1) >= maxMoves) {
+    setTimeout(() => {
+      addLog("Player's turn complete. CPU's turn begins.");
+      setCurrentPlayer('cpu');
+      setCpuMovesMade(0);
+      setMonstersActed([]);
+    }, 1000);
   }
 };
 
@@ -818,7 +863,7 @@ const endTurn = () => {
   // Reset per-turn states
   const resetTeam = (team) => team.map(m => ({
     ...m,
-    canHeal: true
+    canHeal: true,
   }));
   
   const updatedPlayerTeam = resetTeam(pTeam);
@@ -834,6 +879,7 @@ const endTurn = () => {
   
   console.log("Win check:", { playerAlive, cpuAlive, newTurn });
   
+  // Game only ends when one team is completely defeated
   if (playerAlive === 0 && cpuAlive === 0) {
     addLog("Game Over! It's a draw!");
     setGameState('gameOver');
@@ -843,11 +889,8 @@ const endTurn = () => {
   } else if (cpuAlive === 0) {
     addLog("Game Over! Player wins!");
     setGameState('gameOver');
-  } else if (newTurn > 5) {
-    addLog("Game Over! 5 turns completed - It's a tie!");
-    setGameState('gameOver');
   } else {
-    // Reset for new turn
+    // Continue playing - no turn limit
     setTurn(newTurn);
     setMonstersActed([]);
     setPlayerMovesMade(0);
@@ -859,10 +902,6 @@ const endTurn = () => {
     
     const maxMoves = newTurn === 1 ? 2 : 5;
     addLog(`Turn ${newTurn} begins! Each player may use ${maxMoves} monsters.`);
-    
-    if (totalReflectUses >= 3) {
-      addLog("Maximum reflect uses (3) reached for this battle!");
-    }
     
     console.log(`New turn ${newTurn} started, player's turn begins`);
   }
@@ -1105,16 +1144,12 @@ const endTurn = () => {
     </div>
     
     <div className="info-card-footer">
-      <div className="footer-tips">
-        <div className="tip">
-          <span className="symbol">✨</span>
-          <span>Strategy Tip: Balance damage dealers with support monsters</span>
-        </div>
-        <div className="tip">
-          <span className="symbol">🛡️</span>
-          <span>Watch for reflect counters: Maximum 3 uses per battle</span>
-        </div>
-      </div>
+<div className="rule-item">
+  <div className="rule-icon">🛡️</div>
+  <div className="rule-text">
+    <strong>REFLECT:</strong> Each creature with <strong>⌮</strong> can reflect <strong>3 damaging attacks</strong> (individual counter)
+  </div>
+</div>
     </div>
   </div>
 </div>
@@ -1142,10 +1177,10 @@ const endTurn = () => {
             <div className={`turn-indicator ${currentPlayer === 'cpu' ? 'cpu-turn' : ''}`}>
               {currentPlayer === 'player' ? 'Your Turn' : 'CPU Turn'}
             </div>
-            <div className="info-card reflect-counter">
+            {/* <div className="info-card reflect-counter">
               <div className="info-label">Reflect Uses</div>
               <div className="info-value">{totalReflectUses}/3</div>
-            </div>
+            </div> */}
           </div>
         </div>
         
@@ -1235,10 +1270,10 @@ const endTurn = () => {
                   monster.ability2Symbols.includes('⌮') || 
                   monster.ability3Symbols.includes('⌮')) && (
                   <div className="absolute top-3 right-3">
-                    <div className="flex items-center gap-1 bg-gradient-to-r from-orange-600/80 to-amber-500/80 text-white text-xs px-2 py-1 rounded-full">
+                    {/* <div className="flex items-center gap-1 bg-gradient-to-r from-orange-600/80 to-amber-500/80 text-white text-xs px-2 py-1 rounded-full">
                       <span className="symbol symbol-reflect">⌮</span>
                       <span>{3 - totalReflectUses}/3 uses</span>
-                    </div>
+                    </div> */}
                   </div>
                 )}
               </div>
@@ -1589,16 +1624,12 @@ const endTurn = () => {
     </div>
     
     <div className="info-card-footer">
-      <div className="footer-tips">
-        <div className="tip">
-          <span className="symbol">✨</span>
-          <span>Strategy Tip: Balance damage dealers with support monsters</span>
-        </div>
-        <div className="tip">
-          <span className="symbol">🛡️</span>
-          <span>Watch for reflect counters: Maximum 3 uses per battle</span>
-        </div>
-      </div>
+<div className="rule-item">
+  <div className="rule-icon">🛡️</div>
+  <div className="rule-text">
+    <strong>REFLECT:</strong> Each creature with <strong>⌮</strong> can reflect <strong>3 damaging attacks</strong> (individual counter)
+  </div>
+</div>
     </div>
   </div>
 </div>
