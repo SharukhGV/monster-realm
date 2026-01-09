@@ -1,0 +1,128 @@
+[
+  {
+    "creature": "ORCHID MANTIS",
+    "health": "6",
+    "ability1Symbols": "1",
+    "ability2Symbols": "❅",
+    "ability3Symbols": "⌬"
+  },
+  {
+    "creature": "PANGOLIN",
+    "health": "15",
+    "ability1Symbols": "3",
+    "ability2Symbols": "⌾",
+    "ability3Symbols": "⌬"
+  },
+  {
+    "creature": "PEACOCK SPIDER",
+    "health": "12",
+    "ability1Symbols": "1",
+    "ability2Symbols": "⌾⌬",
+    "ability3Symbols": "❅"
+  },
+  {
+    "creature": "FUNGUS BEETLE",
+    "health": "10",
+    "ability1Symbols": "1",
+    "ability2Symbols": " ✿",
+    "ability3Symbols": "❅"
+  },
+  {
+    "creature": "RAFFLESIA",
+    "health": "15",
+    "ability1Symbols": "3",
+    "ability2Symbols": "☀⌾",
+    "ability3Symbols": "☀❦"
+  },
+  {
+    "creature": "TARDIGRADE",
+    "health": "23",
+    "ability1Symbols": "1",
+    "ability2Symbols": " ✿",
+    "ability3Symbols": "⌬"
+  },
+  {
+    "creature": "T.M. NAMIBIENSIS",
+    "health": "23",
+    "ability1Symbols": "1",
+    "ability2Symbols": "⌬",
+    "ability3Symbols": "⌾"
+  },
+  {
+    "creature": "VAMPIRE SQUID",
+    "health": "10",
+    "ability1Symbols": "3",
+    "ability2Symbols": "❦",
+    "ability3Symbols": "⌾"
+  },
+  {
+    "creature": "WELWITSCHIA MIRABILIS",
+    "health": "15",
+    "ability1Symbols": "2",
+    "ability2Symbols": "⌬",
+    "ability3Symbols": "⌮"
+  },
+  {
+    "creature": "BIOLUM. MYCENA",
+    "health": "7",
+    "ability1Symbols": "3",
+    "ability2Symbols": "☀✿",
+    "ability3Symbols": "☀⌾"
+  },
+  {
+    "creature": "BIRD'S NEST FUNGUS",
+    "health": "10",
+    "ability1Symbols": "3",
+    "ability2Symbols": "✿",
+    "ability3Symbols": "☀⚠⌮"
+  },
+  {
+    "creature": "CORDYCEPS",
+    "health": "5",
+    "ability1Symbols": "5",
+    "ability2Symbols": "⌾",
+    "ability3Symbols": "☀❦"
+  },
+  {
+    "creature": "DEVIL'S CIGAR",
+    "health": "1",
+    "ability1Symbols": "⚠15",
+    "ability2Symbols": "☀✿",
+    "ability3Symbols": "☀⌾"
+  },
+  {
+    "creature": "GHOST BAT",
+    "health": "6",
+    "ability1Symbols": "6",
+    "ability2Symbols": "⌾",
+    "ability3Symbols": "❦"
+  },
+  {
+    "creature": "GLOWING ROACH",
+    "health": "10",
+    "ability1Symbols": "2",
+    "ability2Symbols": "✿",
+    "ability3Symbols": "⌮"
+  },
+  {
+    "creature": "JEWEL WASP",
+    "health": "5",
+    "ability1Symbols": "5",
+    "ability2Symbols": "⌾3",
+    "ability3Symbols": "❦3"
+  },
+  {
+    "creature": "LEAFY SEA DRAGON",
+    "health": "13",
+    "ability1Symbols": "1",
+    "ability2Symbols": "⌬",
+    "ability3Symbols": "⌾"
+  },
+  {
+    "creature": "LITHOPS",
+    "health": "10",
+    "ability1Symbols": "3",
+    "ability2Symbols": "⌬",
+    "ability3Symbols": "⌮"
+  }
+]
