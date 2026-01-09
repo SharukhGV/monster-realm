@@ -1085,7 +1085,7 @@ const endTurn = () => {
       <div className="rule-item">
         <div className="rule-icon">❤️</div>
         <div className="rule-text">
-          <strong>HEALTH SYSTEM:</strong> Monsters have <strong>two-digit HP</strong> displayed below their art
+          <strong>HEALTH SYSTEM:</strong> Monsters have <strong>two-digit HP</strong> displayed near their art
         </div>
       </div>
       
@@ -1569,7 +1569,7 @@ const endTurn = () => {
       <div className="rule-item">
         <div className="rule-icon">❤️</div>
         <div className="rule-text">
-          <strong>HEALTH SYSTEM:</strong> Monsters have <strong>two-digit HP</strong> displayed below their art
+          <strong>HEALTH SYSTEM:</strong> Monsters have <strong>two-digit HP</strong> displayed near their art
         </div>
       </div>
       
