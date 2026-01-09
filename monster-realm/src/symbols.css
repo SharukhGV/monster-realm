@@ -1062,3 +1062,55 @@ button:focus-visible,
   transform: rotate(-20deg);
   color: #ff6b6b;
 }
+
+
+/* Horizontal layout specific styles */
+.symbol-legend-item-horizontal {
+  transition: all 0.3s ease;
+}
+
+.symbol-legend-item-horizontal:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.3);
+}
+
+/* Scrollbar styling for horizontal layout */
+.overflow-x-auto::-webkit-scrollbar {
+  height: 6px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: rgba(75, 85, 99, 0.1);
+  border-radius: 3px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.3);
+  border-radius: 3px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.5);
+}
+
+/* Toggle button animations */
+button:active {
+  transform: scale(0.98);
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .symbol-legend-item-horizontal {
+    width: 42vw;
+    min-width: 42vw;
+  }
+  
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+    scroll-padding: 0 1rem;
+  }
+  
+  .overflow-x-auto::-webkit-scrollbar {
+    height: 4px;
+  }
+}

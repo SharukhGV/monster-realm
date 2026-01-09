@@ -121,7 +121,11 @@ const MonsterCard = ({ monster, isPlayer, isActive, onClick, showPoison, showPro
   );
 };
 
+
 const SymbolLegend = () => {
+  const [isOpen, setIsOpen] = useState(true);
+  const [isHorizontal, setIsHorizontal] = useState(true);
+
   const symbolAnimations = {
     '⌮': 'symbol-glow reflect',
     '❦': '',
@@ -144,57 +148,153 @@ const SymbolLegend = () => {
     '☀': '☀️'
   };
 
-  return (
-    <div >
-      {/* <div className="flex items-center justify-between mb-6">
-        <h4 className="text-white font-bold text-lg flex items-center gap-2">
-          <span className="symbol symbol-global symbol-lg">☀</span>
-          <span>Symbol Guide</span>
-        </h4>
-        <div className="text-xs text-gray-400 bg-gray-800/50 px-3 py-1 rounded-full">
-          {Object.keys(SYMBOL_DESCRIPTIONS).length} Symbols
-        </div>
-      </div> */}
-      
-      {/* <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {Object.entries(SYMBOL_DESCRIPTIONS).map(([symbol, desc]) => (
-          <div 
-            key={symbol}
-            className="symbol-legend-item group bg-gray-800/40 hover:bg-gray-700/50 rounded-lg p-4 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg border border-gray-700/30 hover:border-gray-600/50"
+  if (!isOpen) {
+    return (
+      <div className="bg-gray-800/30 rounded-lg p-3 border border-gray-700/30 mb-4">
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => setIsOpen(true)}
+            className="flex items-center gap-2 text-white font-medium hover:text-yellow-400 transition-colors"
           >
-            <div className="flex flex-col items-center text-center">
-              <div className="relative mb-3">
-                <div className={`symbol ${symbolAnimations[symbol] || ''} text-4xl mb-1`}>
-                  {symbol}
-                </div>
-                <div className="absolute -top-2 -right-2 opacity-20 group-hover:opacity-40 transition-opacity">
-                  <span className="text-lg">{symbolIcons[symbol]}</span>
-                </div>
-              </div>
-              
-              <div className="text-white font-semibold text-sm mb-1 tracking-wide uppercase">
-                {desc.split(' ')[0]}
-              </div>
-              
-              <div className="text-gray-300 text-xs leading-tight min-h-[2.5rem]">
-                {desc}
-              </div>
-              
-              <div className="mt-3 w-8 h-1 rounded-full bg-gradient-to-r from-transparent via-current to-transparent opacity-30 group-hover:opacity-60 transition-opacity"></div>
-            </div>
+            <span className="symbol symbol-global">☀</span>
+            <span>Show Symbol Guide ({Object.keys(SYMBOL_DESCRIPTIONS).length})</span>
+          </button>
+          <span className="text-xs text-gray-400">Click to expand</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-gray-800/40 rounded-xl p-4 border border-gray-700/40 mb-6">
+      {/* Header with toggle buttons */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <h4 className="text-white font-bold text-lg flex items-center gap-2">
+            <span className="symbol symbol-global symbol-lg">☀</span>
+            <span>Symbol Guide</span>
+          </h4>
+          <div className="text-xs text-gray-400 bg-gray-800/50 px-3 py-1 rounded-full">
+            {Object.keys(SYMBOL_DESCRIPTIONS).length} Symbols
           </div>
-        ))}
-      </div> */}
+        </div>
+        
+        <div className="flex items-center gap-2">
+          {/* Layout toggle */}
+          <button
+            onClick={() => setIsHorizontal(!isHorizontal)}
+            className="flex items-center gap-1 text-xs text-gray-300 hover:text-white bg-gray-700/50 hover:bg-gray-700 px-3 py-1.5 rounded-lg transition-all"
+            title={`Switch to ${isHorizontal ? 'grid' : 'horizontal'} layout`}
+          >
+            {isHorizontal ? (
+              <>
+                <span className="text-sm">📊</span>
+                <span>Grid</span>
+              </>
+            ) : (
+              <>
+                <span className="text-sm">↔️</span>
+                <span>Horizontal</span>
+              </>
+            )}
+          </button>
+          
+          {/* Close button */}
+          <button
+            onClick={() => setIsOpen(false)}
+            className="text-gray-400 hover:text-white bg-gray-700/30 hover:bg-gray-700/60 w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+            title="Close guide"
+          >
+            <span className="text-lg">×</span>
+          </button>
+        </div>
+      </div>
       
-      {/* <div className="mt-6 pt-4 border-t border-gray-700/50 flex items-center justify-between text-xs text-gray-400">
+      {/* Horizontal Layout */}
+      {isHorizontal ? (
+        <div className="overflow-x-auto pb-2 -mx-1 px-1">
+          <div className="flex gap-2 min-w-max">
+            {Object.entries(SYMBOL_DESCRIPTIONS).map(([symbol, desc]) => (
+              <div 
+                key={symbol}
+                className="symbol-legend-item-horizontal group bg-gray-800/30 hover:bg-gray-700/40 rounded-lg p-3 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg border border-gray-700/30 hover:border-gray-600/50 flex-shrink-0 w-48"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="relative">
+                    <div className={`symbol ${symbolAnimations[symbol] || ''} text-3xl`}>
+                      {symbol}
+                    </div>
+                    <div className="absolute -top-1 -right-1 opacity-20 group-hover:opacity-40 transition-opacity">
+                      <span className="text-sm">{symbolIcons[symbol]}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="text-white font-semibold text-sm mb-1 tracking-wide uppercase truncate">
+                      {desc.split(' ')[0]}
+                    </div>
+                    <div className="text-gray-300 text-xs leading-tight">
+                      {desc}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-3 h-0.5 w-full rounded-full bg-gradient-to-r from-transparent via-current to-transparent opacity-20 group-hover:opacity-40 transition-opacity"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        /* Grid Layout (original) */
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {Object.entries(SYMBOL_DESCRIPTIONS).map(([symbol, desc]) => (
+            <div 
+              key={symbol}
+              className="symbol-legend-item group bg-gray-800/30 hover:bg-gray-700/40 rounded-lg p-4 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg border border-gray-700/30 hover:border-gray-600/50"
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="relative mb-3">
+                  <div className={`symbol ${symbolAnimations[symbol] || ''} text-4xl mb-1`}>
+                    {symbol}
+                  </div>
+                  <div className="absolute -top-2 -right-2 opacity-20 group-hover:opacity-40 transition-opacity">
+                    <span className="text-lg">{symbolIcons[symbol]}</span>
+                  </div>
+                </div>
+                
+                <div className="text-white font-semibold text-sm mb-1 tracking-wide uppercase">
+                  {desc.split(' ')[0]}
+                </div>
+                
+                <div className="text-gray-300 text-xs leading-tight min-h-[2.5rem]">
+                  {desc}
+                </div>
+                
+                <div className="mt-3 w-8 h-1 rounded-full bg-gradient-to-r from-transparent via-current to-transparent opacity-30 group-hover:opacity-60 transition-opacity"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      
+      {/* Footer */}
+      <div className="mt-4 pt-3 border-t border-gray-700/40 flex items-center justify-between text-xs text-gray-400">
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
           <span>Active Effects</span>
+          <span className="text-gray-500">•</span>
+          <span>{isHorizontal ? 'Horizontal' : 'Grid'} View</span>
         </div>
-        <div className="text-right">
-          <span>Hover symbols for details</span>
+        <div className="flex items-center gap-3">
+          <span className="hidden sm:inline">Hover for details</span>
+          <button
+            onClick={() => setIsHorizontal(!isHorizontal)}
+            className="text-xs text-gray-300 hover:text-white px-2 py-1 rounded hover:bg-gray-700/30 transition-colors"
+          >
+            {isHorizontal ? 'Switch to Grid' : 'Switch to Horizontal'}
+          </button>
         </div>
-      </div> */}
+      </div>
     </div>
   );
 };
@@ -213,6 +313,7 @@ const MonsterRealmGame = () => {
   const [playerMovesMade, setPlayerMovesMade] = useState(0);
   const [cpuMovesMade, setCpuMovesMade] = useState(0);
   const [totalReflectUses, setTotalReflectUses] = useState(0);
+  
 // Player Turn Auto-End Effect
 useEffect(() => {
   if (currentPlayer !== 'player') return;
@@ -813,8 +914,8 @@ const endTurn = () => {
           </div>
         </div>
         
-        <SymbolLegend />
-      </div>
+     </div>
+
 
       {/* CPU Team Section */}
       <div className="team-section cpu-team">
@@ -1075,6 +1176,144 @@ const endTurn = () => {
           ))}
         </div>
       </div>
+<div
+  style={{
+    border: "2px solid #444",
+    borderRadius: "10px",
+    padding: "14px 18px",
+    maxWidth: "420px",
+    backgroundColor: "#111",
+    color: "#f5f5f5",
+    fontFamily: "serif",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+    margin:"auto"
+  }}
+>
+  <div
+    style={{
+      fontWeight: "bold",
+      fontSize: "18px",
+      marginBottom: "10px",
+      textAlign: "center",
+      letterSpacing: "0.5px",
+    }}
+  >
+    Symbols for Monster Realm Card Game
+  </div>
+
+  <div style={{ display: "grid", gridTemplateColumns: "28px 1fr", rowGap: "8px", columnGap: "10px", fontSize:"25px" }}>
+    <span>⌮</span>
+    <span>Reflect physical attack (max use 3 times)</span>
+
+    <span>❦</span>
+    <span>Prevent healing on one of opponent’s monsters</span>
+
+    <span>⌾</span>
+    <span>
+      Poison target monster (loses 1 Health per turn.
+      Any heal removes this)
+    </span>
+
+    <span>✿</span>
+    <span>Heal half of current life (rounded up)</span>
+
+    <span>❅</span>
+    <span>Heal all creatures in team by 3 (except self)</span>
+
+    <span>⌬</span>
+    <span>Protect any monster in your team against next incoming attack</span>
+
+    <span>⚠</span>
+    <span>
+      Inflicts wounds on self equal to half the attack
+      damage value (rounded up)
+    </span>
+
+    <span>☀</span>
+    <span>
+      Effects all creatures in play relative to ability
+      (heal effects heal team only, poison effects poison
+      opponent’s team only, etc.)
+    </span>
+  </div>
+</div>
+
+<div
+  style={{
+    border: "2px solid #444",
+    borderRadius: "10px",
+    padding: "16px 18px",
+    maxWidth: "520px",
+    backgroundColor: "#111",
+    color: "#f5f5f5",
+    fontFamily: "serif",
+    lineHeight: "1.5",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+    margin:"auto"
+  }}
+>
+  <div
+    style={{
+      fontWeight: "bold",
+      fontSize: "20px",
+      marginBottom: "12px",
+      textAlign: "center",
+      letterSpacing: "0.6px",
+    }}
+  >
+    Monster Realm: Game Rules
+  </div>
+
+  <div style={{ fontSize: "14.5px" }}>
+    <p style={{ margin: "0 0 10px 0" }}>
+      This game contains <strong>18 monster cards</strong>. A single set of
+      18 cards represents <strong>one player</strong>. Your opponent must also
+      have a full set of 18 cards.
+    </p>
+
+    <p style={{ margin: "0 0 10px 0" }}>
+      For a <strong>Monster Realm Duel</strong>, each player selects
+      <strong> 5 monster cards</strong> from their set.
+    </p>
+
+    <p style={{ margin: "0 0 10px 0" }}>
+      The <strong>first player</strong> may only use
+      <strong> two monsters</strong> during the first turn.
+      Every turn after that, players may use
+      <strong> all 5 monsters</strong>.
+    </p>
+
+    <p style={{ margin: "0 0 10px 0" }}>
+      Once per turn, a monster may perform
+      <strong> only one</strong> of its three abilities.
+      If two abilities appear side-by-side under the same
+      ability name, both effects are resolved together
+      as a <strong>single move</strong>.
+    </p>
+
+    <p style={{ margin: "0 0 10px 0" }}>
+      Any <strong>number</strong> shown on an ability denotes
+      <strong> physical damage</strong> dealt to an opponent’s
+      monster’s health.
+    </p>
+
+    <p style={{ margin: "0 0 10px 0" }}>
+      A monster’s <strong>health</strong> is displayed below its image,
+      to the left of the description, shown as a
+      <strong> two-digit number</strong> representing its total health.
+    </p>
+
+    <p style={{ margin: "0 0 10px 0" }}>
+      A player <strong>loses the game</strong> when all monsters in their
+      party reach <strong>zero (0) health</strong>.
+    </p>
+
+    <p style={{ margin: 0 }}>
+      If <strong>five rounds</strong> pass and no monster loses health,
+      the game ends in a <strong>tie</strong>.
+    </p>
+  </div>
+</div>
 
       {/* Game Over Modal */}
       {gameState === 'gameOver' && (
