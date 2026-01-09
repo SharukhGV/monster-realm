@@ -2,27 +2,48 @@ import React, { useState, useEffect } from 'react';
 import "./symbols.css"
 import "./App.css"
 
-const MONSTER_DATA = [
-  { "creature": "ORCHID MANTIS", "health": 6, "ability1Symbols": "1", "ability2Symbols": "❅", "ability3Symbols": "⌬" },
-  { "creature": "PANGOLIN", "health": 15, "ability1Symbols": "3", "ability2Symbols": "⌾", "ability3Symbols": "⌬" },
-  { "creature": "PEACOCK SPIDER", "health": 12, "ability1Symbols": "1", "ability2Symbols": "⌾⌬", "ability3Symbols": "❅" },
-  { "creature": "FUNGUS BEETLE", "health": 10, "ability1Symbols": "1", "ability2Symbols": "✿", "ability3Symbols": "❅" },
-  { "creature": "RAFFLESIA", "health": 15, "ability1Symbols": "3", "ability2Symbols": "☀⌾", "ability3Symbols": "☀❦" },
-  { "creature": "TARDIGRADE", "health": 23, "ability1Symbols": "1", "ability2Symbols": "✿", "ability3Symbols": "⌬" },
-  { "creature": "T.M. NAMIBIENSIS", "health": 23, "ability1Symbols": "1", "ability2Symbols": "⌬", "ability3Symbols": "⌾" },
-  { "creature": "VAMPIRE SQUID", "health": 10, "ability1Symbols": "3", "ability2Symbols": "❦", "ability3Symbols": "⌾" },
-  { "creature": "WELWITSCHIA MIRABILIS", "health": 15, "ability1Symbols": "2", "ability2Symbols": "⌬", "ability3Symbols": "⌮" },
-  { "creature": "BIOLUM. MYCENA", "health": 7, "ability1Symbols": "3", "ability2Symbols": "☀✿", "ability3Symbols": "☀⌾" },
-  { "creature": "BIRD'S NEST FUNGUS", "health": 10, "ability1Symbols": "3", "ability2Symbols": "✿", "ability3Symbols": "☀⚠⌮" },
-  { "creature": "CORDYCEPS", "health": 5, "ability1Symbols": "5", "ability2Symbols": "⌾", "ability3Symbols": "☀❦" },
-  { "creature": "DEVIL'S CIGAR", "health": 1, "ability1Symbols": "⚠15", "ability2Symbols": "☀✿", "ability3Symbols": "☀⌾" },
-  { "creature": "GHOST BAT", "health": 6, "ability1Symbols": "6", "ability2Symbols": "⌾", "ability3Symbols": "❦" },
-  { "creature": "GLOWING ROACH", "health": 10, "ability1Symbols": "2", "ability2Symbols": "✿", "ability3Symbols": "⌮" },
-  { "creature": "JEWEL WASP", "health": 5, "ability1Symbols": "5", "ability2Symbols": "⌾3", "ability3Symbols": "❦3" },
-  { "creature": "LEAFY SEA DRAGON", "health": 13, "ability1Symbols": "1", "ability2Symbols": "⌬", "ability3Symbols": "⌾" },
-  { "creature": "LITHOPS", "health": 10, "ability1Symbols": "3", "ability2Symbols": "⌬", "ability3Symbols": "⌮" }
-];
+// const MONSTER_DATA = [
+//   { "creature": "ORCHID MANTIS", "health": 6, "ability1Symbols": "1", "ability2Symbols": "❅", "ability3Symbols": "⌬" },
+//   { "creature": "PANGOLIN", "health": 15, "ability1Symbols": "3", "ability2Symbols": "⌾", "ability3Symbols": "⌬" },
+//   { "creature": "PEACOCK SPIDER", "health": 12, "ability1Symbols": "1", "ability2Symbols": "⌾⌬", "ability3Symbols": "❅" },
+//   { "creature": "FUNGUS BEETLE", "health": 10, "ability1Symbols": "1", "ability2Symbols": "✿", "ability3Symbols": "❅" },
+//   { "creature": "RAFFLESIA", "health": 15, "ability1Symbols": "3", "ability2Symbols": "☀⌾", "ability3Symbols": "☀❦" },
+//   { "creature": "TARDIGRADE", "health": 23, "ability1Symbols": "1", "ability2Symbols": "✿", "ability3Symbols": "⌬" },
+//   { "creature": "T.M. NAMIBIENSIS", "health": 23, "ability1Symbols": "1", "ability2Symbols": "⌬", "ability3Symbols": "⌾" },
+//   { "creature": "VAMPIRE SQUID", "health": 10, "ability1Symbols": "3", "ability2Symbols": "❦", "ability3Symbols": "⌾" },
+//   { "creature": "WELWITSCHIA MIRABILIS", "health": 15, "ability1Symbols": "2", "ability2Symbols": "⌬", "ability3Symbols": "⌮" },
+//   { "creature": "BIOLUM. MYCENA", "health": 7, "ability1Symbols": "3", "ability2Symbols": "☀✿", "ability3Symbols": "☀⌾" },
+//   { "creature": "BIRD'S NEST FUNGUS", "health": 10, "ability1Symbols": "3", "ability2Symbols": "✿", "ability3Symbols": "☀⚠⌮" },
+//   { "creature": "CORDYCEPS", "health": 5, "ability1Symbols": "5", "ability2Symbols": "⌾", "ability3Symbols": "☀❦" },
+//   { "creature": "DEVIL'S CIGAR", "health": 1, "ability1Symbols": "⚠15", "ability2Symbols": "☀✿", "ability3Symbols": "☀⌾" },
+//   { "creature": "GHOST BAT", "health": 6, "ability1Symbols": "6", "ability2Symbols": "⌾", "ability3Symbols": "❦" },
+//   { "creature": "GLOWING ROACH", "health": 10, "ability1Symbols": "2", "ability2Symbols": "✿", "ability3Symbols": "⌮" },
+//   { "creature": "JEWEL WASP", "health": 5, "ability1Symbols": "5", "ability2Symbols": "⌾3", "ability3Symbols": "❦3" },
+//   { "creature": "LEAFY SEA DRAGON", "health": 13, "ability1Symbols": "1", "ability2Symbols": "⌬", "ability3Symbols": "⌾" },
+//   { "creature": "LITHOPS", "health": 10, "ability1Symbols": "3", "ability2Symbols": "⌬", "ability3Symbols": "⌮" }
+// ];
 
+
+const MONSTER_DATA = [
+  { "creature": "ORCHID MANTIS", "health": 6, "ability1Symbols": "1", "ability2Symbols": "❅", "ability3Symbols": "⌬", "imageUrl": "https://cdn.hswstatic.com/gif/orchid-mantis2.jpg" },
+  { "creature": "PANGOLIN", "health": 15, "ability1Symbols": "3", "ability2Symbols": "⌾", "ability3Symbols": "⌬", "imageUrl": "https://cdn.britannica.com/41/124241-050-9027A8EF/Pangolin.jpg" },
+  { "creature": "PEACOCK SPIDER", "health": 12, "ability1Symbols": "1", "ability2Symbols": "⌾⌬", "ability3Symbols": "❅", "imageUrl": "https://allyouneedisbiology.wordpress.com/wp-content/uploads/2015/04/8150001846_31bc2d8827_b.jpg?w=1024&h=576&crop=1" },
+  { "creature": "FUNGUS BEETLE", "health": 10, "ability1Symbols": "1", "ability2Symbols": "✿", "ability3Symbols": "❅", "imageUrl": "https://assets.vpm.org/dims4/default/a251bb6/2147483647/strip/true/crop/900x554+0+23/resize/880x542!/quality/90/?url=https%3A%2F%2Fk1-prod-vpm.s3.us-east-2.amazonaws.com%2Fbrightspot%2F27%2F73%2F66902d13d5d9b16c1882cf19ca2c%2Fteneb-bolitotherus-cornutus-evans.jpg" },
+  { "creature": "RAFFLESIA", "health": 15, "ability1Symbols": "3", "ability2Symbols": "☀⌾", "ability3Symbols": "☀❦", "imageUrl": "https://cdn.britannica.com/67/235867-050-C91B09C3/Rafflesia-Sumatra-Indonesia.jpg" },
+  { "creature": "TARDIGRADE", "health": 23, "ability1Symbols": "1", "ability2Symbols": "✿", "ability3Symbols": "⌬", "imageUrl": "https://cdn.shopify.com/s/files/1/0250/0623/files/AdobeStock_128343774.jpg?v=1696605398" },
+  { "creature": "T.M. NAMIBIENSIS", "health": 23, "ability1Symbols": "1", "ability2Symbols": "⌬", "ability3Symbols": "⌾", "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/40/Sulphide_bacteria_crop.jpg" }, // Same as Tardigrade (likely a variant)
+  { "creature": "VAMPIRE SQUID", "health": 10, "ability1Symbols": "3", "ability2Symbols": "❦", "ability3Symbols": "⌾", "imageUrl": "https://i.natgeofe.com/n/79143b44-0ba9-4776-be70-ab948ba7225a/59704.jpg" },
+  { "creature": "WELWITSCHIA MIRABILIS", "health": 15, "ability1Symbols": "2", "ability2Symbols": "⌬", "ability3Symbols": "⌮", "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Welwitschia_mirabilis%282%29.jpg/1200px-Welwitschia_mirabilis%282%29.jpg" },
+  { "creature": "BIOLUM. MYCENA", "health": 7, "ability1Symbols": "3", "ability2Symbols": "☀✿", "ability3Symbols": "☀⌾", "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/Mycena_chlorophos.jpg/1200px-Mycena_chlorophos.jpg" },
+  { "creature": "BIRD'S NEST FUNGUS", "health": 10, "ability1Symbols": "3", "ability2Symbols": "✿", "ability3Symbols": "☀⚠⌮", "imageUrl": "https://gardenbetty.com/wp-content/uploads/2020/09/birds-nest-fungus-08.jpg" },
+  { "creature": "CORDYCEPS", "health": 5, "ability1Symbols": "5", "ability2Symbols": "⌾", "ability3Symbols": "☀❦", "imageUrl": "https://images.ctfassets.net/mrbo2ykgx5lt/45512/d3c6f795a48a76014c94bdb8b9cd430c/Cordyceps-image.jpg" },
+  { "creature": "DEVIL'S CIGAR", "health": 1, "ability1Symbols": "⚠15", "ability2Symbols": "☀✿", "ability3Symbols": "☀⌾", "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/1/18/Devil%27s_cigar_Chorioactis_geaster.jpg" }, // Texas horned lizard (aka "devil's cigar" fungus host resemblance)
+  { "creature": "GHOST BAT", "health": 6, "ability1Symbols": "6", "ability2Symbols": "⌾", "ability3Symbols": "❦", "imageUrl": "https://www.australianwildlife.org/sites/default/files/media/image/2024-12/Ghost%20Bat-2.jpg" },
+  { "creature": "GLOWING ROACH", "health": 10, "ability1Symbols": "2", "ability2Symbols": "✿", "ability3Symbols": "⌮", "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/8/88/Glowing-roaches.jpg" },
+  { "creature": "JEWEL WASP", "health": 5, "ability1Symbols": "5", "ability2Symbols": "⌾3", "ability3Symbols": "❦3", "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/f/f1/Emerald_Cockroach_Wasp.JPG" },
+  { "creature": "LEAFY SEA DRAGON", "health": 13, "ability1Symbols": "1", "ability2Symbols": "⌬", "ability3Symbols": "⌾", "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/e/e4/Leafy_Seadragon_on_Kangaroo_Island.jpg" },
+  { "creature": "LITHOPS", "health": 10, "ability1Symbols": "3", "ability2Symbols": "⌬", "ability3Symbols": "⌮", "imageUrl": "https://cdn.mos.cms.futurecdn.net/D278Dj48ErCoY4eoPwCaCF-1600-80.jpg" }
+];
 const SYMBOL_DESCRIPTIONS = {
   '⌮': 'Reflect (3 uses)',
   '❦': 'Prevent Healing',
@@ -849,10 +870,20 @@ const endTurn = () => {
               >
                 <div className="selection-card-header">
                   <h3 className="selection-card-name">{monster.creature}</h3>
+                  <div className="selection-card-header">
+</div>
                   <span className="selection-card-hp">
                     HP: {monster.health}
                   </span>
                 </div>
+                               <div>
+  <img 
+    src={monster.imageUrl} 
+    alt={monster.creature} 
+    className="w-full h-32 object-cover rounded-t-lg mb-2"
+    style={{width:"200px",height:"100px",borderRadius:"10px", borderStyle:"solid", borderColor:"white", textAlign:"center"}}
+  />
+</div>
                 <div className="ability-grid">
                   <div className="ability-slot">
                     <div className="symbol symbol-md">{monster.ability1Symbols}</div>
@@ -943,7 +974,14 @@ const endTurn = () => {
                   <h3 className="monster-name">{monster.creature}</h3>
                   <span className="monster-hp">{monster.currentHp}/{monster.health}</span>
                 </div>
-                
+                  <div>
+  <img 
+    src={monster.imageUrl} 
+    alt={monster.creature} 
+    className="w-full h-32 object-cover rounded-t-lg mb-2"
+    style={{width:"200px",height:"100px",borderRadius:"10px", borderStyle:"solid", borderColor:"white", textAlign:"center"}}
+  />
+</div>
                 <div className="monster-status">
                   {monster.isPoisoned && (
                     <span className="status-badge poison">
@@ -1047,7 +1085,14 @@ const endTurn = () => {
                   <h3 className="monster-name">{monster.creature}</h3>
                   <span className="monster-hp">{monster.currentHp}/{monster.health}</span>
                 </div>
-                
+                  <div>
+  <img 
+    src={monster.imageUrl} 
+    alt={monster.creature} 
+    className="w-full h-32 object-cover rounded-t-lg mb-2"
+    style={{width:"200px",height:"100px",borderRadius:"10px", borderStyle:"solid", borderColor:"white", textAlign:"center"}}
+  />
+</div>
                 <div className="monster-status">
                   {monster.isPoisoned && (
                     <span className="status-badge poison">
