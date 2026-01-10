@@ -723,12 +723,12 @@ if (effects.selfWound && effects.reflect && effects.isGlobal && effects.dmg === 
   // Apply healing effects
   if (effects.healHalf) {
     if (effects.isGlobal) {
-        newLogs.push(`${updatedActor.creature} unleashes a global heal!`);
+        newLogs.push(`${updatedActor.creature} unleashes a global heal on their team!`);
         
         const applyGlobalHeal = (team) => {
             return team.map(monster => {
                 if (monster.currentHp > 0 && monster.canHeal) {
-                    const healAmount = Math.ceil(monster.health / 2); // The user said "half health value", this seems more correct
+                    const healAmount = Math.ceil(monster.health / 2);
                     const newHp = Math.min(monster.maxHp, monster.currentHp + healAmount);
                     if (newHp > monster.currentHp) {
                        newLogs.push(`${monster.creature} healed for ${newHp - monster.currentHp} HP.`);
@@ -738,12 +738,15 @@ if (effects.selfWound && effects.reflect && effects.isGlobal && effects.dmg === 
                 return monster;
             });
         };
-
-        updatedPlayerTeam = applyGlobalHeal(updatedPlayerTeam);
-        updatedCpuTeam = applyGlobalHeal(updatedCpuTeam);
+        
+        if (isPlayerAction) {
+            updatedPlayerTeam = applyGlobalHeal(actorTeam);
+        } else {
+            updatedCpuTeam = applyGlobalHeal(actorTeam);
+        }
 
     } else if (updatedActor.canHeal) { // non-global heal half
-        const healAmount = Math.ceil(updatedActor.health / 2); // The user said "half health value"
+        const healAmount = Math.ceil(updatedActor.health / 2);
         updatedActor.currentHp = Math.min(updatedActor.maxHp, updatedActor.currentHp + healAmount);
         updatedActor.poisonStacks = 0;
         newLogs.push(`${updatedActor.creature} healed ${healAmount} HP and cured poison`);
