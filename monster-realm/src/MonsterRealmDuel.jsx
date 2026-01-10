@@ -358,6 +358,7 @@ const MonsterRealmGame = () => {
   const [monstersActed, setMonstersActed] = useState([]);
   const [playerMovesMade, setPlayerMovesMade] = useState(0);
   const [cpuMovesMade, setCpuMovesMade] = useState(0);
+  const [isInfoVisible, setIsInfoVisible] = useState(true);
 //   const [totalReflectUses, setTotalReflectUses] = useState(0);
   
 // Player Turn Auto-End Effect
@@ -565,8 +566,8 @@ const executeAbility = (actor, abilityKey, effects, ability, targetData = null) 
   const abilityText = actor[abilityKey];
   
   // Clone the current state
-  const updatedPlayerTeam = [...playerTeam];
-  const updatedCpuTeam = [...cpuTeam];
+  let updatedPlayerTeam = [...playerTeam];
+  let updatedCpuTeam = [...cpuTeam];
   
   const isPlayerAction = currentPlayer === 'player';
   let actorTeam = isPlayerAction ? updatedPlayerTeam : updatedCpuTeam;
@@ -576,7 +577,7 @@ const executeAbility = (actor, abilityKey, effects, ability, targetData = null) 
   const actorIndex = actorTeam.findIndex(m => m.creature === actor.creature);
   if (actorIndex === -1) return;
   
-  const updatedActor = { ...actorTeam[actorIndex] };
+  let updatedActor = { ...actorTeam[actorIndex] };
   const newLogs = [];
   
   newLogs.push(`${updatedActor.creature} uses ${abilityText}`);
@@ -720,12 +721,33 @@ if (effects.selfWound && effects.reflect && effects.isGlobal && effects.dmg === 
   actorTeam[actorIndex] = updatedActor;
   
   // Apply healing effects
-  if (effects.healHalf && updatedActor.canHeal) {
-    const healAmount = Math.ceil(updatedActor.currentHp / 2);
-    updatedActor.currentHp = Math.min(updatedActor.maxHp, updatedActor.currentHp + healAmount);
-    updatedActor.poisonStacks = 0;
-    actorTeam[actorIndex] = updatedActor;
-    newLogs.push(`${updatedActor.creature} healed ${healAmount} HP and cured poison`);
+  if (effects.healHalf) {
+    if (effects.isGlobal) {
+        newLogs.push(`${updatedActor.creature} unleashes a global heal!`);
+        
+        const applyGlobalHeal = (team) => {
+            return team.map(monster => {
+                if (monster.currentHp > 0 && monster.canHeal) {
+                    const healAmount = Math.ceil(monster.health / 2); // The user said "half health value", this seems more correct
+                    const newHp = Math.min(monster.maxHp, monster.currentHp + healAmount);
+                    if (newHp > monster.currentHp) {
+                       newLogs.push(`${monster.creature} healed for ${newHp - monster.currentHp} HP.`);
+                    }
+                    return { ...monster, currentHp: newHp, poisonStacks: 0 };
+                }
+                return monster;
+            });
+        };
+
+        updatedPlayerTeam = applyGlobalHeal(updatedPlayerTeam);
+        updatedCpuTeam = applyGlobalHeal(updatedCpuTeam);
+
+    } else if (updatedActor.canHeal) { // non-global heal half
+        const healAmount = Math.ceil(updatedActor.health / 2); // The user said "half health value"
+        updatedActor.currentHp = Math.min(updatedActor.maxHp, updatedActor.currentHp + healAmount);
+        updatedActor.poisonStacks = 0;
+        newLogs.push(`${updatedActor.creature} healed ${healAmount} HP and cured poison`);
+    }
   }
   
   if (effects.healTeam) {
@@ -760,11 +782,11 @@ if (effects.selfWound && effects.reflect && effects.isGlobal && effects.dmg === 
   
   // Update state
   if (isPlayerAction) {
-    setPlayerTeam(actorTeam);
-    setCpuTeam(targetTeam);
+    setPlayerTeam(updatedPlayerTeam);
+    setCpuTeam(updatedCpuTeam);
   } else {
-    setCpuTeam(actorTeam);
-    setPlayerTeam(targetTeam);
+    setCpuTeam(updatedCpuTeam);
+    setPlayerTeam(updatedPlayerTeam);
   }
   
   newLogs.forEach(log => addLog(log));
@@ -1207,6 +1229,8 @@ const endTurn = () => {
      </div>
 
 
+      <div className="battle-grid">
+
       {/* CPU Team Section */}
       <div className="team-section cpu-team">
         <h2 className="team-label cpu">CPU Team</h2>
@@ -1322,6 +1346,212 @@ const endTurn = () => {
           })}
         </div>
       </div>
+
+      <div className="log-and-info-container">
+        <div className="info-toggle-container">
+            <button className="info-toggle-button" onClick={() => setIsInfoVisible(!isInfoVisible)}>
+                <span className="symbol">{isInfoVisible ? '📖' : '📖'}</span>
+                <span>{isInfoVisible ? 'Hide Rules & Symbols' : 'Show Rules & Symbols'}</span>
+            </button>
+        </div>
+        <div className="log-panel">
+            <h3>
+            <span className="symbol">📜</span> Battle Log
+            </h3>
+            <div className="log-list">
+            {logs.map((log, index) => (
+                <div key={index} className="log-item">
+                {log}
+                </div>
+            ))}
+            </div>
+        </div>
+        {isInfoVisible && (
+        <div className="game-info-section">
+    {/* Symbols Guide */}
+    <div className="info-card game-rules">
+        <div className="info-card-header">
+        <div className="info-card-title">
+            <span className="symbol symbol-global">☀</span>
+            <h3>SYMBOL GUIDE</h3>
+        </div>
+        <div className="info-card-subtitle">
+            Master the language of monster abilities
+        </div>
+        </div>
+        
+        <div className="symbols-grid">
+        <div className="symbol-entry">
+            <div className="symbol-display">
+            <span className="symbol symbol-reflect">⌮</span>
+            </div>
+            <div className="symbol-details">
+            <div className="symbol-name">Reflect</div>
+            <div className="symbol-description">Reflects physical attack back to attacker (max 3 uses per battle)</div>
+            </div>
+        </div>
+        
+        <div className="symbol-entry">
+            <div className="symbol-display">
+            <span className="symbol symbol-poison">❦</span>
+            </div>
+            <div className="symbol-details">
+            <div className="symbol-name">Prevent Healing</div>
+            <div className="symbol-description">Target cannot be healed this turn</div>
+            </div>
+        </div>
+        
+        <div className="symbol-entry">
+            <div className="symbol-display">
+            <span className="symbol">⌾</span>
+            </div>
+            <div className="symbol-details">
+            <div className="symbol-name">Poison</div>
+            <div className="symbol-description">Target loses 1 HP per turn (removed by healing)</div>
+            </div>
+        </div>
+        
+        <div className="symbol-entry">
+            <div className="symbol-display">
+            <span className="symbol symbol-heal">✿</span>
+            </div>
+            <div className="symbol-details">
+            <div className="symbol-name">Heal 50%</div>
+            <div className="symbol-description">Heals half of current HP (rounded up)</div>
+            </div>
+        </div>
+        
+        <div className="symbol-entry">
+            <div className="symbol-display">
+            <span className="symbol symbol-team">❅</span>
+            </div>
+            <div className="symbol-details">
+            <div className="symbol-name">Team Heal</div>
+            <div className="symbol-description">Heals all teammates by 3 HP (except self)</div>
+            </div>
+        </div>
+        
+        <div className="symbol-entry">
+            <div className="symbol-display">
+            <span className="symbol symbol-protect">⌬</span>
+            </div>
+            <div className="symbol-details">
+            <div className="symbol-name">Protect</div>
+            <div className="symbol-description">Blocks next incoming attack for target</div>
+            </div>
+        </div>
+        
+        <div className="symbol-entry">
+            <div className="symbol-display">
+            <span className="symbol symbol-warning">⚠</span>
+            </div>
+            <div className="symbol-details">
+            <div className="symbol-name">Self Wound</div>
+            <div className="symbol-description">Inflicts half damage to self (rounded up)</div>
+            </div>
+        </div>
+        
+        <div className="symbol-entry">
+            <div className="symbol-display">
+            <span className="symbol symbol-global">☀</span>
+            </div>
+            <div className="symbol-details">
+            <div className="symbol-name">Global Effect</div>
+            <div className="symbol-description">Affects all creatures in play</div>
+            </div>
+        </div>
+        </div>
+        
+        <div className="info-card-footer">
+        <div className="footer-note">
+            <span className="symbol">💡</span>
+            <span>Combine symbols for powerful combos!</span>
+        </div>
+        </div>
+    </div>
+
+    {/* Game Rules */}
+    <div className="info-card game-manual">
+        <div className="info-card-header">
+        <div className="info-card-title">
+            <span className="symbol">📖</span>
+            <h3>MONSTER REALM DUEL RULES</h3>
+        </div>
+        <div className="info-card-subtitle">
+            How to command your monstrous army
+        </div>
+        </div>
+        
+        <div className="rules-content">
+        <div className="rule-item">
+            <div className="rule-icon">🃏</div>
+            <div className="rule-text">
+            <strong>DECK SIZE:</strong> Each player needs a full set of <strong>18 monster cards</strong>
+            </div>
+        </div>
+        
+        <div className="rule-item">
+            <div className="rule-icon">⚔️</div>
+            <div className="rule-text">
+            <strong>TEAM SELECTION:</strong> Choose <strong>5 monsters</strong> from your collection for battle
+            </div>
+        </div>
+        
+        <div className="rule-item">
+            <div className="rule-icon">⏱️</div>
+            <div className="rule-text">
+            <strong>TURN LIMITS:</strong> Turn 1: <strong>2 monsters</strong> can act. Turns 2-5: <strong>All 5 monsters</strong> can act
+            </div>
+        </div>
+        
+        <div className="rule-item">
+            <div className="rule-icon">🎯</div>
+            <div className="rule-text">
+            <strong>ACTIONS:</strong> Each monster may use <strong>one ability</strong> per turn (adjacent symbols combine)
+            </div>
+        </div>
+        
+        <div className="rule-item">
+            <div className="rule-icon">💥</div>
+            <div className="rule-text">
+            <strong>DAMAGE:</strong> Numbers on abilities deal <strong>physical damage</strong> to opponents
+            </div>
+        </div>
+        
+        <div className="rule-item">
+            <div className="rule-icon">❤️</div>
+            <div className="rule-text">
+            <strong>HEALTH SYSTEM:</strong> Monsters have <strong>two-digit HP</strong> displayed near their art
+            </div>
+        </div>
+        
+        <div className="rule-item">
+            <div className="rule-icon">☠️</div>
+            <div className="rule-text">
+            <strong>DEFEAT:</strong> Lose when <strong>all your monsters reach 0 HP</strong>
+            </div>
+        </div>
+        
+        <div className="rule-item">
+            <div className="rule-icon">⏳</div>
+            <div className="rule-text">
+            <strong>TIME LIMIT:</strong> Battle ends in a <strong>tie after 5 turns</strong> if no victor emerges
+            </div>
+        </div>
+        </div>
+        
+        <div className="info-card-footer">
+    <div className="rule-item">
+    <div className="rule-icon">🛡️</div>
+    <div className="rule-text">
+        <strong>REFLECT:</strong> Each creature with <strong>⌮</strong> can reflect <strong>3 damaging attacks</strong> (individual counter)
+    </div>
+    </div>
+        </div>
+    </div>
+    </div>
+    )}
+    </div>
 
       {/* Player Team Section */}
       <div className="team-section player-team">
@@ -1501,202 +1731,7 @@ const endTurn = () => {
         </div>
       </div>
 
-      {/* Battle Log */}
-      <div className="log-panel">
-        <h3>
-          <span className="symbol">📜</span> Battle Log
-        </h3>
-        <div className="log-list">
-          {logs.map((log, index) => (
-            <div key={index} className="log-item">
-              {log}
-            </div>
-          ))}
-        </div>
       </div>
-<div className="game-info-section">
-  {/* Symbols Guide */}
-  <div className="info-card game-rules">
-    <div className="info-card-header">
-      <div className="info-card-title">
-        <span className="symbol symbol-global">☀</span>
-        <h3>SYMBOL GUIDE</h3>
-      </div>
-      <div className="info-card-subtitle">
-        Master the language of monster abilities
-      </div>
-    </div>
-    
-    <div className="symbols-grid">
-      <div className="symbol-entry">
-        <div className="symbol-display">
-          <span className="symbol symbol-reflect">⌮</span>
-        </div>
-        <div className="symbol-details">
-          <div className="symbol-name">Reflect</div>
-          <div className="symbol-description">Reflects physical attack back to attacker (max 3 uses per battle)</div>
-        </div>
-      </div>
-      
-      <div className="symbol-entry">
-        <div className="symbol-display">
-          <span className="symbol symbol-poison">❦</span>
-        </div>
-        <div className="symbol-details">
-          <div className="symbol-name">Prevent Healing</div>
-          <div className="symbol-description">Target cannot be healed this turn</div>
-        </div>
-      </div>
-      
-      <div className="symbol-entry">
-        <div className="symbol-display">
-          <span className="symbol">⌾</span>
-        </div>
-        <div className="symbol-details">
-          <div className="symbol-name">Poison</div>
-          <div className="symbol-description">Target loses 1 HP per turn (removed by healing)</div>
-        </div>
-      </div>
-      
-      <div className="symbol-entry">
-        <div className="symbol-display">
-          <span className="symbol symbol-heal">✿</span>
-        </div>
-        <div className="symbol-details">
-          <div className="symbol-name">Heal 50%</div>
-          <div className="symbol-description">Heals half of current HP (rounded up)</div>
-        </div>
-      </div>
-      
-      <div className="symbol-entry">
-        <div className="symbol-display">
-          <span className="symbol symbol-team">❅</span>
-        </div>
-        <div className="symbol-details">
-          <div className="symbol-name">Team Heal</div>
-          <div className="symbol-description">Heals all teammates by 3 HP (except self)</div>
-        </div>
-      </div>
-      
-      <div className="symbol-entry">
-        <div className="symbol-display">
-          <span className="symbol symbol-protect">⌬</span>
-        </div>
-        <div className="symbol-details">
-          <div className="symbol-name">Protect</div>
-          <div className="symbol-description">Blocks next incoming attack for target</div>
-        </div>
-      </div>
-      
-      <div className="symbol-entry">
-        <div className="symbol-display">
-          <span className="symbol symbol-warning">⚠</span>
-        </div>
-        <div className="symbol-details">
-          <div className="symbol-name">Self Wound</div>
-          <div className="symbol-description">Inflicts half damage to self (rounded up)</div>
-        </div>
-      </div>
-      
-      <div className="symbol-entry">
-        <div className="symbol-display">
-          <span className="symbol symbol-global">☀</span>
-        </div>
-        <div className="symbol-details">
-          <div className="symbol-name">Global Effect</div>
-          <div className="symbol-description">Affects all creatures in play</div>
-        </div>
-      </div>
-    </div>
-    
-    <div className="info-card-footer">
-      <div className="footer-note">
-        <span className="symbol">💡</span>
-        <span>Combine symbols for powerful combos!</span>
-      </div>
-    </div>
-  </div>
-
-  {/* Game Rules */}
-  <div className="info-card game-manual">
-    <div className="info-card-header">
-      <div className="info-card-title">
-        <span className="symbol">📖</span>
-        <h3>MONSTER REALM DUEL RULES</h3>
-      </div>
-      <div className="info-card-subtitle">
-        How to command your monstrous army
-      </div>
-    </div>
-    
-    <div className="rules-content">
-      <div className="rule-item">
-        <div className="rule-icon">🃏</div>
-        <div className="rule-text">
-          <strong>DECK SIZE:</strong> Each player needs a full set of <strong>18 monster cards</strong>
-        </div>
-      </div>
-      
-      <div className="rule-item">
-        <div className="rule-icon">⚔️</div>
-        <div className="rule-text">
-          <strong>TEAM SELECTION:</strong> Choose <strong>5 monsters</strong> from your collection for battle
-        </div>
-      </div>
-      
-      <div className="rule-item">
-        <div className="rule-icon">⏱️</div>
-        <div className="rule-text">
-          <strong>TURN LIMITS:</strong> Turn 1: <strong>2 monsters</strong> can act. Turns 2-5: <strong>All 5 monsters</strong> can act
-        </div>
-      </div>
-      
-      <div className="rule-item">
-        <div className="rule-icon">🎯</div>
-        <div className="rule-text">
-          <strong>ACTIONS:</strong> Each monster may use <strong>one ability</strong> per turn (adjacent symbols combine)
-        </div>
-      </div>
-      
-      <div className="rule-item">
-        <div className="rule-icon">💥</div>
-        <div className="rule-text">
-          <strong>DAMAGE:</strong> Numbers on abilities deal <strong>physical damage</strong> to opponents
-        </div>
-      </div>
-      
-      <div className="rule-item">
-        <div className="rule-icon">❤️</div>
-        <div className="rule-text">
-          <strong>HEALTH SYSTEM:</strong> Monsters have <strong>two-digit HP</strong> displayed near their art
-        </div>
-      </div>
-      
-      <div className="rule-item">
-        <div className="rule-icon">☠️</div>
-        <div className="rule-text">
-          <strong>DEFEAT:</strong> Lose when <strong>all your monsters reach 0 HP</strong>
-        </div>
-      </div>
-      
-      <div className="rule-item">
-        <div className="rule-icon">⏳</div>
-        <div className="rule-text">
-          <strong>TIME LIMIT:</strong> Battle ends in a <strong>tie after 5 turns</strong> if no victor emerges
-        </div>
-      </div>
-    </div>
-    
-    <div className="info-card-footer">
-<div className="rule-item">
-  <div className="rule-icon">🛡️</div>
-  <div className="rule-text">
-    <strong>REFLECT:</strong> Each creature with <strong>⌮</strong> can reflect <strong>3 damaging attacks</strong> (individual counter)
-  </div>
-</div>
-    </div>
-  </div>
-</div>
       {/* Game Over Modal */}
       {gameState === 'gameOver' && (
         <div className="game-over-modal">
