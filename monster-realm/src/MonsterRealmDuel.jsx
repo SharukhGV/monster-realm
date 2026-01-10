@@ -81,6 +81,11 @@ const MonsterCard = ({ monster, isPlayer, isActive, onClick, showPoison, showPro
   if (hpPercentage <= 30) hpBarClass = 'bg-red-500';
   else if (hpPercentage <= 60) hpBarClass = 'bg-yellow-500';
 
+  // Reflect counters (default to 3 uses if not initialized)
+  const totalReflect = monster.reflectUses ?? 3;
+  const usedReflect = monster.reflectUsesUsed ?? 0;
+  const reflectRemaining = Math.max(0, totalReflect - usedReflect);
+
   return (
 <div 
       className={`
@@ -102,14 +107,20 @@ const MonsterCard = ({ monster, isPlayer, isActive, onClick, showPoison, showPro
       </div>
       
       <div className="flex flex-wrap gap-1 mb-2 min-h-[24px]">
-        {showPoison && (
+        {showPoison && monster.poisonStacks > 0 && (
           <span className="bg-purple-600 text-white text-xs px-2 py-0.5 rounded flex items-center gap-1">
-            <span className="symbol symbol-poison">⌾</span> Poison
+            <span className="symbol symbol-poison">⌾</span> Poison{monster.poisonStacks > 1 ? ` x${monster.poisonStacks}` : ''}
           </span>
         )}
         {showProtected && (
           <span className="bg-blue-600 text-white text-xs px-2 py-0.5 rounded flex items-center gap-1">
             <span className="symbol symbol-protect">⌬</span> Protected
+          </span>
+        )}
+        {/* Prevent Healing badge (shows when monster cannot be healed this turn) */}
+        {monster.canHeal === false && (
+          <span className="bg-red-600 text-white text-xs px-2 py-0.5 rounded flex items-center gap-1">
+            <span className="symbol symbol-prevent">❦</span> No Heal
           </span>
         )}
       </div>
@@ -144,14 +155,14 @@ const MonsterCard = ({ monster, isPlayer, isActive, onClick, showPoison, showPro
 
       {/* reflect indicator */}
       
-{monster.ability1Symbols.includes('⌮') || 
+{(monster.ability1Symbols.includes('⌮') || 
  monster.ability2Symbols.includes('⌮') || 
- monster.ability3Symbols.includes('⌮') ? (
+ monster.ability3Symbols.includes('⌮')) ? (
   <div className="absolute top-2 right-2 bg-gradient-to-r from-orange-600 to-amber-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
     <span className="symbol symbol-reflect">⌮</span>
-    <span>{monster.reflectUses - monster.reflectUsesUsed}/3 uses</span>
+    <span>{reflectRemaining}/{totalReflect} uses</span>
   </div>
-) : null}
+) : null} 
     </div>
   );
 };
@@ -472,11 +483,10 @@ const initializeMonster = (monster) => ({
   ...monster,
   currentHp: monster.health,
   maxHp: monster.health,
-  isPoisoned: false,
+  poisonStacks: 0,
   isProtected: false,
   canHeal: true,
   preventHealing: false,
-  poisonDamage: 0,
   reflectUses: 3, // Each monster gets 3 reflect uses
   reflectUsesUsed: 0 // Track how many they've used
 });
@@ -691,10 +701,10 @@ if (effects.selfWound && effects.reflect && effects.isGlobal && effects.dmg === 
       }
     }
     
-    // Apply poison
+    // Apply poison (stacking)
     if (effects.poison) {
-      updatedTarget.isPoisoned = true;
-      newLogs.push(`${updatedTarget.creature} was poisoned!`);
+      updatedTarget.poisonStacks = (updatedTarget.poisonStacks || 0) + 1;
+      newLogs.push(`${updatedTarget.creature} was poisoned! (x${updatedTarget.poisonStacks})`);
     }
     
     // Apply prevent healing
@@ -713,7 +723,7 @@ if (effects.selfWound && effects.reflect && effects.isGlobal && effects.dmg === 
   if (effects.healHalf && updatedActor.canHeal) {
     const healAmount = Math.ceil(updatedActor.currentHp / 2);
     updatedActor.currentHp = Math.min(updatedActor.maxHp, updatedActor.currentHp + healAmount);
-    updatedActor.isPoisoned = false;
+    updatedActor.poisonStacks = 0;
     actorTeam[actorIndex] = updatedActor;
     newLogs.push(`${updatedActor.creature} healed ${healAmount} HP and cured poison`);
   }
@@ -725,7 +735,7 @@ if (effects.selfWound && effects.reflect && effects.isGlobal && effects.dmg === 
           teammate.canHeal) {
         const healedTeammate = { ...actorTeam[index] };
         healedTeammate.currentHp = Math.min(healedTeammate.maxHp, healedTeammate.currentHp + 3);
-        healedTeammate.isPoisoned = false;
+        healedTeammate.poisonStacks = 0;
         actorTeam[index] = healedTeammate;
         newLogs.push(`${healedTeammate.creature} healed 3 HP`);
       }
@@ -849,9 +859,11 @@ const endTurn = () => {
   const applyPoison = (team) => {
     return team.map(monster => {
       const updatedMonster = { ...monster };
-      if (updatedMonster.isPoisoned && updatedMonster.currentHp > 0) {
-        updatedMonster.currentHp = Math.max(0, updatedMonster.currentHp - 1);
-        addLog(`${updatedMonster.creature} took 1 poison damage`);
+      const stacks = updatedMonster.poisonStacks || 0;
+      if (stacks > 0 && updatedMonster.currentHp > 0) {
+        const dmg = stacks;
+        updatedMonster.currentHp = Math.max(0, updatedMonster.currentHp - dmg);
+        addLog(`${updatedMonster.creature} took ${dmg} poison damage`);
       }
       return updatedMonster;
     });
@@ -950,6 +962,14 @@ const endTurn = () => {
                     <div className="symbol symbol-md">{monster.ability3Symbols}</div>
                   </div>
                 </div>
+
+                {/* Show reflect uses on selection cards if the monster has reflect */}
+                {(monster.ability1Symbols.includes('⌮') || monster.ability2Symbols.includes('⌮') || monster.ability3Symbols.includes('⌮')) && (
+                  <div className="mt-2 inline-block bg-gradient-to-r from-orange-600 to-amber-500 text-white text-xs px-2 py-0.5 rounded-full inline-flex items-center gap-2">
+                    <span className="symbol symbol-reflect">⌮</span>
+                    <span>3 uses</span>
+                  </div>
+                )}
               </div>
             );
           })}
@@ -1217,14 +1237,19 @@ const endTurn = () => {
 <MonsterArtDisplay monsterName={monster.creature} size={200} />
   </div>
                 <div className="monster-status">
-                  {monster.isPoisoned && (
+                  {monster.poisonStacks > 0 && (
                     <span className="status-badge poison">
-                      <span className="symbol">⌾</span> Poison
+                      <span className="symbol">⌾</span> Poison{monster.poisonStacks > 1 ? ` x${monster.poisonStacks}` : ''}
                     </span>
                   )}
                   {monster.isProtected && (
                     <span className="status-badge protected">
                       <span className="symbol">⌬</span> Protected
+                    </span>
+                  )}
+                  {monster.canHeal === false && (
+                    <span className="status-badge prevent">
+                      <span className="symbol">❦</span> No Heal
                     </span>
                   )}
                 </div>
@@ -1242,16 +1267,34 @@ const endTurn = () => {
                 </div>
                 
                 <div className="ability-grid-battle">
-                  <div className="ability-slot-battle">
+                  <div className="ability-slot-battle relative">
                     <div className="ability-symbol symbol symbol-damage">{monster.ability1Symbols}</div>
+                    {(monster.ability1Symbols.includes('☀') && monster.ability1Symbols.includes('⚠') && monster.ability1Symbols.includes('⌮')) && (
+                      <div className="absolute top-1 right-1 bg-amber-700/80 text-white text-[10px] px-1 py-0.5 rounded flex items-center gap-1">
+                        <span className="symbol symbol-reflect">⌮</span>
+                        <span>{Math.max(0, (monster.reflectUses ?? 3) - (monster.reflectUsesUsed ?? 0))}/{monster.reflectUses ?? 3}</span>
+                      </div>
+                    )}
                     <div className="ability-label">Ability 1</div>
                   </div>
-                  <div className="ability-slot-battle">
+                  <div className="ability-slot-battle relative">
                     <div className="ability-symbol">{monster.ability2Symbols}</div>
+                    {(monster.ability2Symbols.includes('☀') && monster.ability2Symbols.includes('⚠') && monster.ability2Symbols.includes('⌮')) && (
+                      <div className="absolute top-1 right-1 bg-amber-700/80 text-white text-[10px] px-1 py-0.5 rounded flex items-center gap-1">
+                        <span className="symbol symbol-reflect">⌮</span>
+                        <span>{Math.max(0, (monster.reflectUses ?? 3) - (monster.reflectUsesUsed ?? 0))}/{monster.reflectUses ?? 3}</span>
+                      </div>
+                    )}
                     <div className="ability-label">Ability 2</div>
                   </div>
-                  <div className="ability-slot-battle">
+                  <div className="ability-slot-battle relative">
                     <div className="ability-symbol">{monster.ability3Symbols}</div>
+                    {(monster.ability3Symbols.includes('☀') && monster.ability3Symbols.includes('⚠') && monster.ability3Symbols.includes('⌮')) && (
+                      <div className="absolute top-1 right-1 bg-amber-700/80 text-white text-[10px] px-1 py-0.5 rounded flex items-center gap-1">
+                        <span className="symbol symbol-reflect">⌮</span>
+                        <span>{Math.max(0, (monster.reflectUses ?? 3) - (monster.reflectUsesUsed ?? 0))}/{monster.reflectUses ?? 3}</span>
+                      </div>
+                    )}
                     <div className="ability-label">Ability 3</div>
                   </div>
                 </div>
@@ -1266,16 +1309,14 @@ const endTurn = () => {
                 )}
                 
                 {/* Reflect Indicator */}
-                {(monster.ability1Symbols.includes('⌮') || 
-                  monster.ability2Symbols.includes('⌮') || 
-                  monster.ability3Symbols.includes('⌮')) && (
+                {(monster.ability1Symbols.includes('⌮') || monster.ability2Symbols.includes('⌮') || monster.ability3Symbols.includes('⌮')) && (
                   <div className="absolute top-3 right-3">
-                    {/* <div className="flex items-center gap-1 bg-gradient-to-r from-orange-600/80 to-amber-500/80 text-white text-xs px-2 py-1 rounded-full">
+                    <div className="flex items-center gap-1 bg-gradient-to-r from-orange-600/80 to-amber-500/80 text-white text-xs px-2 py-1 rounded-full">
                       <span className="symbol symbol-reflect">⌮</span>
-                      <span>{3 - totalReflectUses}/3 uses</span>
-                    </div> */}
+                      <span>{Math.max(0, (monster.reflectUses ?? 3) - (monster.reflectUsesUsed ?? 0))}/{monster.reflectUses ?? 3} uses</span>
+                    </div>
                   </div>
-                )}
+                )} 
               </div>
             );
           })}
@@ -1323,14 +1364,19 @@ const endTurn = () => {
 <MonsterArtDisplay monsterName={monster.creature} size={200} />
   </div>
                 <div className="monster-status">
-                  {monster.isPoisoned && (
+                  {monster.poisonStacks > 0 && (
                     <span className="status-badge poison">
-                      <span className="symbol">⌾</span> Poison
+                      <span className="symbol">⌾</span> Poison{monster.poisonStacks > 1 ? ` x${monster.poisonStacks}` : ''}
                     </span>
                   )}
                   {monster.isProtected && (
                     <span className="status-badge protected">
                       <span className="symbol">⌬</span> Protected
+                    </span>
+                  )}
+                  {monster.canHeal === false && (
+                    <span className="status-badge prevent">
+                      <span className="symbol">❦</span> No Heal
                     </span>
                   )}
                   {hasActed && (
@@ -1354,7 +1400,7 @@ const endTurn = () => {
                 
                 <div className="ability-grid-battle">
                   <div 
-                    className={`ability-slot-battle ${
+                    className={`ability-slot-battle relative ${
                       selectedAbility?.monster?.creature === monster.creature && 
                       selectedAbility?.abilityKey === 'ability1Symbols' ? 'active' : ''
                     } ${
@@ -1371,10 +1417,16 @@ const endTurn = () => {
                     }}
                   >
                     <div className="ability-symbol symbol symbol-damage">{monster.ability1Symbols}</div>
+                    {(monster.ability1Symbols.includes('☀') && monster.ability1Symbols.includes('⚠') && monster.ability1Symbols.includes('⌮')) && (
+                      <div className="absolute top-1 right-1 bg-amber-700/80 text-white text-[10px] px-1 py-0.5 rounded flex items-center gap-1">
+                        <span className="symbol symbol-reflect">⌮</span>
+                        <span>{Math.max(0, (monster.reflectUses ?? 3) - (monster.reflectUsesUsed ?? 0))}/{monster.reflectUses ?? 3}</span>
+                      </div>
+                    )}
                     <div className="ability-label">Ability 1</div>
                   </div>
                   <div 
-                    className={`ability-slot-battle ${
+                    className={`ability-slot-battle relative ${
                       selectedAbility?.monster?.creature === monster.creature && 
                       selectedAbility?.abilityKey === 'ability2Symbols' ? 'active' : ''
                     } ${
@@ -1391,10 +1443,16 @@ const endTurn = () => {
                     }}
                   >
                     <div className="ability-symbol">{monster.ability2Symbols}</div>
+                    {(monster.ability2Symbols.includes('☀') && monster.ability2Symbols.includes('⚠') && monster.ability2Symbols.includes('⌮')) && (
+                      <div className="absolute top-1 right-1 bg-amber-700/80 text-white text-[10px] px-1 py-0.5 rounded flex items-center gap-1">
+                        <span className="symbol symbol-reflect">⌮</span>
+                        <span>{Math.max(0, (monster.reflectUses ?? 3) - (monster.reflectUsesUsed ?? 0))}/{monster.reflectUses ?? 3}</span>
+                      </div>
+                    )}
                     <div className="ability-label">Ability 2</div>
                   </div>
                   <div 
-                    className={`ability-slot-battle ${
+                    className={`ability-slot-battle relative ${
                       selectedAbility?.monster?.creature === monster.creature && 
                       selectedAbility?.abilityKey === 'ability3Symbols' ? 'active' : ''
                     } ${
@@ -1411,6 +1469,12 @@ const endTurn = () => {
                     }}
                   >
                     <div className="ability-symbol">{monster.ability3Symbols}</div>
+                    {(monster.ability3Symbols.includes('☀') && monster.ability3Symbols.includes('⚠') && monster.ability3Symbols.includes('⌮')) && (
+                      <div className="absolute top-1 right-1 bg-amber-700/80 text-white text-[10px] px-1 py-0.5 rounded flex items-center gap-1">
+                        <span className="symbol symbol-reflect">⌮</span>
+                        <span>{Math.max(0, (monster.reflectUses ?? 3) - (monster.reflectUsesUsed ?? 0))}/{monster.reflectUses ?? 3}</span>
+                      </div>
+                    )}
                     <div className="ability-label">Ability 3</div>
                   </div>
                 </div>

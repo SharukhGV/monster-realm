@@ -532,6 +532,12 @@ body::before {
   color: #60a5fa;
 }
 
+.status-badge.prevent {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.08));
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #f87171;
+}
+
 /* HP Bar */
 .hp-container {
   margin-bottom: 1.5rem;
