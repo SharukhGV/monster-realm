@@ -1148,7 +1148,7 @@ const endTurn = () => {
       <div className="rule-item">
         <div className="rule-icon">⏱️</div>
         <div className="rule-text">
-          <strong>TURN LIMITS:</strong> Turn 1: <strong>2 monsters</strong> can act. Turns 2-5: <strong>All 5 monsters</strong> can act
+          <strong>TURN LIMITS:</strong> Turn 1: <strong>2 monsters</strong> can act. Turns 2 and onwards: <strong>All 5 monsters</strong> can act
         </div>
       </div>
       
@@ -1503,7 +1503,7 @@ const endTurn = () => {
         <div className="rule-item">
             <div className="rule-icon">⏱️</div>
             <div className="rule-text">
-            <strong>TURN LIMITS:</strong> Turn 1: <strong>2 monsters</strong> can act. Turns 2-5: <strong>All 5 monsters</strong> can act
+            <strong>TURN LIMITS:</strong> Turn 1: <strong>2 monsters</strong> can act. Turns 2 and onwards: <strong>All 5 monsters</strong> can act
             </div>
         </div>
         
